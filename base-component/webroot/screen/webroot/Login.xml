@@ -71,7 +71,22 @@ along with this software (see the LICENSE.md file). If not, see
         <error-response url="."/>
     </transition>
     <transition name="logout">
-        <actions><script>ec.user.logoutUser()</script></actions>
+        <actions>
+            <set field="moquiExternalLogout" from="ec.web?.sessionAttributes?.moquiExternalLogout"/>
+            <if condition="moquiExternalLogout">
+                <then>
+                    <service-call name="daolos.foundation.security.SsoServices.perform#Logout"/>
+                </then>
+                <else>
+                    <script>ec.user.logoutUser()</script>
+                </else>
+            </if>
+        </actions>
+        <conditional-response type="none">
+            <condition>
+                <expression>moquiExternalLogout</expression>
+            </condition>
+        </conditional-response>
         <default-response url="/"/>
         <error-response url="."/>
     </transition>
@@ -152,6 +167,13 @@ along with this software (see the LICENSE.md file). If not, see
         <set field="minLength" from="passwordNode.attribute('min-length')" default-value="8" type="Integer"/>
         <set field="minDigits" from="passwordNode.attribute('min-digits')" default-value="1" type="Integer"/>
         <set field="minOthers" from="passwordNode.attribute('min-others')" default-value="1" type="Integer"/>
+
+        <script>ec.artifactExecution.disableAuthz()</script>
+        <entity-find entity-name="daolos.foundation.security.sso.Flow" list="flowList">
+            <econdition field-name="disabled" operator="not-equals" value="Y" or-null="true"/>
+            <order-by field-name="sequenceNum"/>
+        </entity-find>
+        <script>ec.artifactExecution.enableAuthz()</script>
     </actions>
     <widgets>
         <!-- NOTE: this screen is not under the apps screen, but uses similar header/footer/etc -->
