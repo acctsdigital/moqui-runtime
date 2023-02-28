@@ -35,27 +35,79 @@ along with this software (see the LICENSE.md file). If not, see
         <parameter name="password" required="true"/>
         <parameter name="code"/>
         <actions>
-            <set field="loggedIn" from="ec.user.loginUser(username, password)"/>
-            <if condition="ec.message.hasError()"><script>ec.web.sendJsonResponse([loggedIn:false])</script></if>
+            <!-- validate parameters -->
+            <if condition="!username">
+                <then>
+                    <log level="error" message="No username specified"/>
+                    <return error="true" message="${ec.l10n.localize('Foundation.Security.UsernameNotSpecified')}"/>
+                </then>
+                <else-if condition="!password">
+                    <log level="error" message="No password specified"/>
+                    <return error="true" message="${ec.l10n.localize('Foundation.Security.PasswordNotSpecified')}"/>
+                </else-if>
+            </if>
 
-            <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired"><then>
-                <if condition="code"><then>
-                    <service-call name="org.moqui.impl.UserServices.validate#ExternalUserAuthcCode"
-                            in-map="[code:code]" out-map="validateOut"/>
-                    <if condition="validateOut.verified"><then>
-                        <script>ec.user.internalLoginUser(validateOut.username)</script>
-                        <return/>
-                    </then><else>
-                        <message type="danger" public="true">Authentication code is not valid</message>
-                    </else></if>
-                </then></if>
+            <!-- login user -->
+            <set field="loginSuccess" from="ec.user.loginUser(username, password)"/>
+            <if condition="!loginSuccess">
+                <script>
+                    ec.message.clearErrors()
+                    ec.message.clearAll()
+                </script>
+                <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired">
+                    <then>
+                        <log level="warn" message="Additional authentication required"/>
+                        <set field="loginSuccess" from="false"/>
+                        <set field="authenticationRequired" from="true"/>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, authenticationRequired: true])</script>
+                    </then>
+                    <else-if condition="ec.web.sessionAttributes.moquiPasswordChangeRequired">
+                        <log level="warn" message="Password change required"/>
+                        <set field="loginSuccess" from="false"/>
+                        <set field="passwordChangeRequired" from="true"/>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, passwordChangeRequired: true])</script>
+                    </else-if>
+                    <else-if condition="ec.web.sessionAttributes.moquiExpiredCredentials">
+                        <log level="error" message="Credentials have expired"/>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true])</script>
+                    </else-if>
+                    <else>
+                        <log level="error" message="Invalid username or password"/>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false])</script>
+                    </else>
+                </if>
+            </if>
 
-                <!-- if we didn't return above send back info about user's authc factors -->
-                <service-call name="org.moqui.impl.UserServices.get#ExternalUserAuthcFactorInfo" out-map="factorInfoOut"/>
-                <script>ec.web.sendJsonResponse(factorInfoOut)</script>
-            </then><else>
-                <script>ec.web.sendJsonResponse([loggedIn:loggedIn])</script>
-            </else></if>
+            <script>
+                ec.web.sendJsonResponse([
+                        loginSuccess: true,
+                        sessionId: ec.web.session.getId(),
+                        sessionValidity: ec.web.session.getMaxInactiveInterval(),
+                        sessionToken: ec.web.getSessionToken()
+                ])
+            </script>
+
+<!--            <set field="loggedIn" from="ec.user.loginUser(username, password)"/>-->
+<!--            <if condition="ec.message.hasError()"><script>ec.web.sendJsonResponse([loggedIn:false])</script></if>-->
+
+<!--            <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired"><then>-->
+<!--                <if condition="code"><then>-->
+<!--                    <service-call name="org.moqui.impl.UserServices.validate#ExternalUserAuthcCode"-->
+<!--                            in-map="[code:code]" out-map="validateOut"/>-->
+<!--                    <if condition="validateOut.verified"><then>-->
+<!--                        <script>ec.user.internalLoginUser(validateOut.username)</script>-->
+<!--                        <return/>-->
+<!--                    </then><else>-->
+<!--                        <message type="danger" public="true">Authentication code is not valid</message>-->
+<!--                    </else></if>-->
+<!--                </then></if>-->
+
+<!--                &lt;!&ndash; if we didn't return above send back info about user's authc factors &ndash;&gt;-->
+<!--                <service-call name="org.moqui.impl.UserServices.get#ExternalUserAuthcFactorInfo" out-map="factorInfoOut"/>-->
+<!--                <script>ec.web.sendJsonResponse(factorInfoOut)</script>-->
+<!--            </then><else>-->
+<!--                <script>ec.web.sendJsonResponse([loggedIn:loggedIn])</script>-->
+<!--            </else></if>-->
         </actions>
         <default-response type="none"/>
     </transition>
@@ -85,10 +137,16 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <!-- logout: REST API calls from a browser or session aware client will have an active session, use this for explicit logout and terminate session -->
     <transition name="logout" begin-transaction="false">
-        <actions><script>
-            if (ec.user.username) { ec.user.logoutUser(); ec.web.sendTextResponse("successful") }
-            else { ec.web.sendTextResponse("no_user") }
-        </script></actions>
+        <actions>
+            <script>
+                if (ec.user.username) {
+                    ec.user.logoutUser()
+                    ec.web.sendJsonResponse([loggedOut: true])
+                } else {
+                    ec.web.sendJsonResponse([loggedOut: false])
+                }
+            </script>
+        </actions>
         <default-response type="none"/>
     </transition>
     <!-- NOTE DEJ-2022-12 commented for security reasons described below, is not a critical hole and
