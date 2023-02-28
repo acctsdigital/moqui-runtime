@@ -39,21 +39,25 @@ along with this software (see the LICENSE.md file). If not, see
             <if condition="!username">
                 <then>
                     <log level="error" message="No username specified"/>
-                    <return error="true" message="${ec.l10n.localize('Foundation.Security.UsernameNotSpecified')}"/>
+                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.UsernameNotSpecified')])</script>
                 </then>
                 <else-if condition="!password">
                     <log level="error" message="No password specified"/>
-                    <return error="true" message="${ec.l10n.localize('Foundation.Security.PasswordNotSpecified')}"/>
+                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.PasswordNotSpecified')])</script>
                 </else-if>
             </if>
+
+            <!-- reset session attributes -->
+            <script>
+                ec.web.sessionAttributes.remove("moquiAuthcFactorRequired")
+                ec.web.sessionAttributes.remove("moquiPasswordChangeRequired")
+                ec.web.sessionAttributes.remove("moquiExpiredCredentials")
+            </script>
 
             <!-- login user -->
             <set field="loginSuccess" from="ec.user.loginUser(username, password)"/>
             <if condition="!loginSuccess">
-                <script>
-                    ec.message.clearErrors()
-                    ec.message.clearAll()
-                </script>
+                <script>ec.message.clearErrors(); ec.message.clearAll()</script>
                 <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired">
                     <then>
                         <log level="warn" message="Additional authentication required"/>
@@ -69,11 +73,11 @@ along with this software (see the LICENSE.md file). If not, see
                     </else-if>
                     <else-if condition="ec.web.sessionAttributes.moquiExpiredCredentials">
                         <log level="error" message="Credentials have expired"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true])</script>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true, message: ec.l10n.localize('Foundation.Security.CredentialsExpired')])</script>
                     </else-if>
                     <else>
                         <log level="error" message="Invalid username or password"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false])</script>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.LoginFailed')])</script>
                     </else>
                 </if>
             </if>
@@ -81,7 +85,6 @@ along with this software (see the LICENSE.md file). If not, see
             <script>
                 ec.web.sendJsonResponse([
                         loginSuccess: true,
-                        sessionId: ec.web.session.getId(),
                         sessionValidity: ec.web.session.getMaxInactiveInterval(),
                         sessionToken: ec.web.getSessionToken()
                 ])
