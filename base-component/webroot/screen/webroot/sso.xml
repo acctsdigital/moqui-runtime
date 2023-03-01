@@ -19,14 +19,20 @@ along with this software (see the LICENSE.md file). If not, see
         <parameter name="flowId"/>
         <parameter name="returnTo"/>
         <actions>
-            <service-call name="daolos.foundation.security.SsoServices.perform#Login" in-map="[flowId: flowId]"/>
+            <service-call name="daolos.foundation.security.SsoServices.perform#Login" in-map="context"/>
         </actions>
         <default-response type="none"/>
     </transition>
     <transition name="callback" read-only="true" require-session-token="false">
         <actions>
+            <set field="moquiFlowReturnTo" from="ec.web?.sessionAttributes?.moquiFlowReturnTo"/>
             <service-call name="daolos.foundation.security.SsoServices.handle#Callback" in-map="context"/>
         </actions>
+        <conditional-response url="${moquiFlowReturnTo}" url-type="plain">
+            <condition>
+                <expression>moquiFlowReturnTo</expression>
+            </condition>
+        </conditional-response>
         <default-response type="screen-last"/>
     </transition>
     <transition name="logout" read-only="true" require-session-token="false">

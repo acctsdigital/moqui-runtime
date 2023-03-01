@@ -72,8 +72,8 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="logout">
         <actions>
-            <set field="moquiExternalLogout" from="ec.web?.sessionAttributes?.moquiExternalLogout"/>
-            <if condition="moquiExternalLogout">
+            <set field="moquiFlowExternalLogout" from="ec.web?.sessionAttributes?.moquiFlowExternalLogout"/>
+            <if condition="moquiFlowExternalLogout">
                 <then>
                     <service-call name="daolos.foundation.security.SsoServices.perform#Logout"/>
                 </then>
@@ -84,7 +84,7 @@ along with this software (see the LICENSE.md file). If not, see
         </actions>
         <conditional-response type="none">
             <condition>
-                <expression>moquiExternalLogout</expression>
+                <expression>moquiFlowExternalLogout</expression>
             </condition>
         </conditional-response>
         <default-response url="/"/>
