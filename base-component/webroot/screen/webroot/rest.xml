@@ -33,17 +33,16 @@ along with this software (see the LICENSE.md file). If not, see
         <!-- NOTE: login is a transition here instead of a Service REST endpoint under /rest/s1/moqui/... as a special case to not require session token -->
         <parameter name="username" required="true"/>
         <parameter name="password" required="true"/>
-        <parameter name="code"/>
         <actions>
             <!-- validate parameters -->
             <if condition="!username">
                 <then>
                     <log level="error" message="No username specified"/>
-                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.UsernameNotSpecified')])</script>
+                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.usernameNotSpecified')])</script>
                 </then>
                 <else-if condition="!password">
                     <log level="error" message="No password specified"/>
-                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.PasswordNotSpecified')])</script>
+                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.passwordNotSpecified')])</script>
                 </else-if>
             </if>
 
@@ -73,11 +72,11 @@ along with this software (see the LICENSE.md file). If not, see
                     </else-if>
                     <else-if condition="ec.web.sessionAttributes.moquiExpiredCredentials">
                         <log level="error" message="Credentials have expired"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true, message: ec.l10n.localize('Foundation.Security.CredentialsExpired')])</script>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true, message: ec.l10n.localize('foundation.security.credentialsExpired')])</script>
                     </else-if>
                     <else>
                         <log level="error" message="Invalid username or password"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('Foundation.Security.LoginFailed')])</script>
+                        <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.loginFailed')])</script>
                     </else>
                 </if>
             </if>
