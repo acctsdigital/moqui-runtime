@@ -30,86 +30,49 @@ along with this software (see the LICENSE.md file). If not, see
 
     <!-- login: for client applications that use a Moqui UserAccount -->
     <transition name="login" method="post" require-session-token="false">
-        <!-- NOTE: login is a transition here instead of a Service REST endpoint under /rest/s1/moqui/... as a special case to not require session token -->
-        <parameter name="username" required="true"/>
-        <parameter name="password" required="true"/>
         <actions>
-            <!-- validate parameters -->
-            <if condition="!username">
-                <then>
-                    <log level="error" message="No username specified"/>
-                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.usernameNotSpecified')])</script>
-                </then>
-                <else-if condition="!password">
-                    <log level="error" message="No password specified"/>
-                    <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.passwordNotSpecified')])</script>
-                </else-if>
-            </if>
-
-            <!-- reset session attributes -->
-            <script>
-                ec.web.sessionAttributes.remove("moquiAuthcFactorRequired")
-                ec.web.sessionAttributes.remove("moquiPasswordChangeRequired")
-                ec.web.sessionAttributes.remove("moquiExpiredCredentials")
-            </script>
-
-            <!-- login user -->
-            <set field="loginSuccess" from="ec.user.loginUser(username, password)"/>
-            <if condition="!loginSuccess">
-                <script>ec.message.clearErrors(); ec.message.clearAll()</script>
-                <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired">
-                    <then>
-                        <log level="warn" message="Additional authentication required"/>
-                        <set field="loginSuccess" from="false"/>
-                        <set field="authenticationRequired" from="true"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, authenticationRequired: true])</script>
-                    </then>
-                    <else-if condition="ec.web.sessionAttributes.moquiPasswordChangeRequired">
-                        <log level="warn" message="Password change required"/>
-                        <set field="loginSuccess" from="false"/>
-                        <set field="passwordChangeRequired" from="true"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, passwordChangeRequired: true])</script>
-                    </else-if>
-                    <else-if condition="ec.web.sessionAttributes.moquiExpiredCredentials">
-                        <log level="error" message="Credentials have expired"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, credentialsExpired: true, message: ec.l10n.localize('foundation.security.credentialsExpired')])</script>
-                    </else-if>
-                    <else>
-                        <log level="error" message="Invalid username or password"/>
-                        <script>ec.web.sendJsonResponse([loginSuccess: false, message: ec.l10n.localize('foundation.security.loginFailed')])</script>
-                    </else>
-                </if>
-            </if>
-
+            <service-call name="daolos.foundation.security.UserServices.login#User" in-map="context" out-map="context"/>
             <script>
                 ec.web.sendJsonResponse([
-                        loginSuccess: true,
-                        sessionValidity: ec.web.session.getMaxInactiveInterval(),
-                        sessionToken: ec.web.getSessionToken()
+                        loginSuccessful: loginSuccessful,
+                        authenticationRequired: authenticationRequired,
+                        passwordChangeRequired: passwordChangeRequired,
+                        credentialsExpired: credentialsExpired,
+                        sessionValidity: loginSuccessful ? ec.web.session.getMaxInactiveInterval() : null,
+                        sessionToken: loginSuccessful ? ec.web.getSessionToken() : null
                 ])
             </script>
-
-<!--            <set field="loggedIn" from="ec.user.loginUser(username, password)"/>-->
-<!--            <if condition="ec.message.hasError()"><script>ec.web.sendJsonResponse([loggedIn:false])</script></if>-->
-
-<!--            <if condition="ec.web.sessionAttributes.moquiAuthcFactorRequired"><then>-->
-<!--                <if condition="code"><then>-->
-<!--                    <service-call name="org.moqui.impl.UserServices.validate#ExternalUserAuthcCode"-->
-<!--                            in-map="[code:code]" out-map="validateOut"/>-->
-<!--                    <if condition="validateOut.verified"><then>-->
-<!--                        <script>ec.user.internalLoginUser(validateOut.username)</script>-->
-<!--                        <return/>-->
-<!--                    </then><else>-->
-<!--                        <message type="danger" public="true">Authentication code is not valid</message>-->
-<!--                    </else></if>-->
-<!--                </then></if>-->
-
-<!--                &lt;!&ndash; if we didn't return above send back info about user's authc factors &ndash;&gt;-->
-<!--                <service-call name="org.moqui.impl.UserServices.get#ExternalUserAuthcFactorInfo" out-map="factorInfoOut"/>-->
-<!--                <script>ec.web.sendJsonResponse(factorInfoOut)</script>-->
-<!--            </then><else>-->
-<!--                <script>ec.web.sendJsonResponse([loggedIn:loggedIn])</script>-->
-<!--            </else></if>-->
+        </actions>
+        <default-response type="none"/>
+    </transition>
+    <transition name="changePassword" require-session-token="false">
+        <actions>
+            <service-call name="daolos.foundation.security.UserServices.update#Password" in-map="context" out-map="context"/>
+            <if condition="updateSuccessful">
+                <then>
+                    <service-call name="daolos.foundation.security.UserServices.loginInternal#User" in-map="context" out-map="context"/>
+                    <script>
+                        ec.web.sendJsonResponse([
+                                passwordIssues: passwordIssues,
+                                updateSuccessful: updateSuccessful,
+                                loginSuccessful: loginSuccessful,
+                                authenticationRequired: authenticationRequired,
+                                passwordChangeRequired: passwordChangeRequired,
+                                credentialsExpired: credentialsExpired,
+                                sessionValidity: loginSuccessful ? ec.web.session.getMaxInactiveInterval() : null,
+                                sessionToken: loginSuccessful ? ec.web.getSessionToken() : null
+                        ])
+                    </script>
+                </then>
+                <else>
+                    <script>
+                        ec.web.sendJsonResponse([
+                                passwordIssues: passwordIssues,
+                                updateSuccessful: updateSuccessful
+                        ])
+                    </script>
+                </else>
+            </if>
         </actions>
         <default-response type="none"/>
     </transition>
@@ -143,9 +106,9 @@ along with this software (see the LICENSE.md file). If not, see
             <script>
                 if (ec.user.username) {
                     ec.user.logoutUser()
-                    ec.web.sendJsonResponse([loggedOut: true])
+                    ec.web.sendJsonResponse([logoutSuccessful: true])
                 } else {
-                    ec.web.sendJsonResponse([loggedOut: false])
+                    ec.web.sendJsonResponse([logoutSuccessful: false])
                 }
             </script>
         </actions>
