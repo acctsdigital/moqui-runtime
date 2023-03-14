@@ -45,7 +45,7 @@ along with this software (see the LICENSE.md file). If not, see
         </actions>
         <default-response type="none"/>
     </transition>
-    <transition name="changePassword" require-session-token="false">
+    <transition name="changePassword" method="post" require-session-token="false">
         <actions>
             <service-call name="daolos.foundation.security.UserServices.update#Password" in-map="context" out-map="context"/>
             <if condition="updateSuccessful">
@@ -73,6 +73,13 @@ along with this software (see the LICENSE.md file). If not, see
                     </script>
                 </else>
             </if>
+        </actions>
+        <default-response type="none"/>
+    </transition>
+    <transition name="resetPassword" method="post" require-session-token="false">
+        <actions>
+            <service-call name="daolos.foundation.security.UserServices.reset#Password" in-map="context" out-map="context"/>
+            <script>ec.web.sendJsonResponse([resetSuccessful: resetSuccessful])</script>
         </actions>
         <default-response type="none"/>
     </transition>
