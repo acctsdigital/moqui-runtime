@@ -82,7 +82,7 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="authFactors" require-session-token="false">
         <actions>
-            <service-call name="daolos.foundation.security.UserServices.list#UserAuthFactors" in-map="context" out-map="context"/>
+            <service-call name="daolos.foundation.security.UserServices.find#UserAuthFactors" in-map="context" out-map="context"/>
             <script>
                 ec.web.sendJsonResponse([
                         secondFactorRequired: secondFactorRequired,
