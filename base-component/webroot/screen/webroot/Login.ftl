@@ -20,7 +20,7 @@
 <div class="text-center form-signin">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation"><a href="#login" aria-controls="login" role="tab" data-toggle="tab">${ec.l10n.localize("Login")}</a></li>
-        <#if !flowList.isEmpty()><li role="presentation"><a href="#sso" aria-controls="sso" role="tab" data-toggle="tab">${ec.l10n.localize("SSO")}</a></li></#if>
+        <#if !authFlowList.isEmpty()><li role="presentation"><a href="#sso" aria-controls="sso" role="tab" data-toggle="tab">${ec.l10n.localize("SSO")}</a></li></#if>
         <li role="presentation"><a href="#reset" aria-controls="reset" role="tab" data-toggle="tab">${ec.l10n.localize("Reset Password")}</a></li>
         <li role="presentation"><a href="#change" aria-controls="change" role="tab" data-toggle="tab">${ec.l10n.localize("Change Password")}</a></li>
     </ul>
@@ -58,12 +58,12 @@
             <#if passwordChangeRequired><p class="text-warning text-center">WARNING: Password change required</p></#if>
         </form>
     </div>
-    <#if !flowList.isEmpty()>
+    <#if !authFlowList.isEmpty()>
         <div id="sso" class="tab-pane">
-            <#list flowList as flow>
+            <#list authFlowList as authFlow>
                 <form method="post" action="/sso/login" class="form-signin">
-                    <input type="hidden" name="flowId" value="${flow.flowId}">
-                    <button class="btn btn-lg btn-primary btn-block" type="submit">${flow.description}</button>
+                    <input type="hidden" name="authFlowId" value="${authFlow.authFlowId}">
+                    <button class="btn btn-lg btn-primary btn-block" type="submit">${authFlow.description}</button>
                 </form>
             </#list>
         </div>

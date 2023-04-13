@@ -72,10 +72,10 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="logout">
         <actions>
-            <set field="moquiFlowExternalLogout" from="ec.web.sessionAttributes.containsKey('moquiFlowExternalLogout')"/>
-            <if condition="moquiFlowExternalLogout">
+            <set field="moquiAuthFlowExternalLogout" from="ec.web.sessionAttributes.containsKey('moquiAuthFlowExternalLogout')"/>
+            <if condition="moquiAuthFlowExternalLogout">
                 <then>
-                    <service-call name="daolos.foundation.security.SsoServices.perform#Logout"/>
+                    <service-call name="daolos.foundation.security.AuthServices.perform#Logout"/>
                 </then>
                 <else>
                     <script>ec.user.logoutUser()</script>
@@ -84,7 +84,7 @@ along with this software (see the LICENSE.md file). If not, see
         </actions>
         <conditional-response type="none">
             <condition>
-                <expression>moquiFlowExternalLogout</expression>
+                <expression>moquiAuthFlowExternalLogout</expression>
             </condition>
         </conditional-response>
         <default-response url="/"/>
@@ -169,7 +169,8 @@ along with this software (see the LICENSE.md file). If not, see
         <set field="minOthers" from="passwordNode.attribute('min-others')" default-value="1" type="Integer"/>
 
         <script>ec.artifactExecution.disableAuthz()</script>
-        <entity-find entity-name="daolos.foundation.security.sso.Flow" list="flowList">
+        <entity-find entity-name="daolos.foundation.security.auth.AuthFlow" list="authFlowList">
+            <econdition field-name="inbound" operator="not-equals" value="Y" or-null="true"/>
             <econdition field-name="disabled" operator="not-equals" value="Y" or-null="true"/>
             <order-by field-name="sequenceNum"/>
         </entity-find>

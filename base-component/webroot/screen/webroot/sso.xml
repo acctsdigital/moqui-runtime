@@ -16,21 +16,21 @@ along with this software (see the LICENSE.md file). If not, see
         require-authentication="false" track-artifact-hit="false" default-menu-include="false">
 
     <transition name="login" read-only="true" require-session-token="false">
-        <parameter name="flowId"/>
+        <parameter name="authFlowId"/>
         <parameter name="returnTo"/>
         <actions>
-            <service-call name="daolos.foundation.security.SsoServices.perform#Login" in-map="context"/>
+            <service-call name="daolos.foundation.security.AuthServices.perform#Login" in-map="context"/>
         </actions>
         <default-response type="none"/>
     </transition>
     <transition name="callback" read-only="true" require-session-token="false">
         <actions>
-            <set field="moquiFlowReturnTo" from="ec.web?.sessionAttributes?.moquiFlowReturnTo"/>
-            <service-call name="daolos.foundation.security.SsoServices.handle#Callback" in-map="context"/>
+            <set field="moquiAuthFlowReturnTo" from="ec.web?.sessionAttributes?.moquiAuthFlowReturnTo"/>
+            <service-call name="daolos.foundation.security.AuthServices.handle#Callback" in-map="context"/>
         </actions>
-        <conditional-response url="${moquiFlowReturnTo}" url-type="plain">
+        <conditional-response url="${moquiAuthFlowReturnTo}" url-type="plain">
             <condition>
-                <expression>moquiFlowReturnTo</expression>
+                <expression>moquiAuthFlowReturnTo</expression>
             </condition>
         </conditional-response>
         <default-response type="screen-last"/>
@@ -38,7 +38,7 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="logout" read-only="true" require-session-token="false">
         <parameter name="returnTo"/>
         <actions>
-            <service-call name="daolos.foundation.security.SsoServices.perform#Logout" in-map="context"/>
+            <service-call name="daolos.foundation.security.AuthServices.perform#Logout" in-map="context"/>
         </actions>
         <default-response type="none"/>
     </transition>
