@@ -43,7 +43,7 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="changePassword" method="post" require-session-token="false">
         <actions>
-            <service-call name="daolos.foundation.security.UserServices.update#Password" in-map="context" out-map="context"/>
+            <service-call name="daolos.foundation.security.PrincipalServices.update#Password" in-map="context" out-map="context"/>
             <if condition="updateSuccessful">
                 <then>
                     <service-call name="daolos.foundation.security.UserServices.loginInternal#User" out-map="context">
@@ -82,7 +82,7 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="authFactors" require-session-token="false">
         <actions>
-            <service-call name="daolos.foundation.security.UserServices.find#UserAuthFactors" in-map="context" out-map="context"/>
+            <service-call name="daolos.foundation.security.PrincipalServices.find#UserAuthFactors" in-map="context" out-map="context"/>
             <script>
                 ec.web.sendJsonResponse([
                         secondFactorRequired: secondFactorRequired,
@@ -94,7 +94,7 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="sendAuthCode" method="post" require-session-token="false">
         <actions>
-            <service-call name="daolos.foundation.security.UserServices.send#AuthCode" in-map="context" out-map="context"/>
+            <service-call name="daolos.foundation.security.PrincipalServices.send#AuthCode" in-map="context" out-map="context"/>
             <script>
                 ec.web.sendJsonResponse([
                         sendSuccessful: sendSuccessful,
@@ -106,7 +106,7 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="verifyAuthCode" method="post" require-session-token="false">
         <actions>
-            <service-call name="daolos.foundation.security.UserServices.verify#AuthCode" in-map="context" out-map="context"/>
+            <service-call name="daolos.foundation.security.PrincipalServices.verify#AuthCode" in-map="context" out-map="context"/>
             <if condition="verifySuccessful">
                 <then>
                     <service-call name="daolos.foundation.security.UserServices.loginInternal#User" out-map="context">
