@@ -2390,7 +2390,7 @@ moqui.webrootVue = new Vue({
             this.getCsrfToken(jqXHR);
             if (resp.secondFactorRequired) {
                 this.reLoginMfaData = resp;
-            } else if (resp.loggedIn) {
+            } else if (resp.loggedIn || resp.loginSuccessful) {
                 this.reLoginPostLogin();
             }
         },
@@ -2414,7 +2414,7 @@ moqui.webrootVue = new Vue({
         },
         reLoginVerifyOtpResponse: function(resp, status, jqXHR) {
             this.getCsrfToken(jqXHR);
-            if (resp.loggedIn) {
+            if (resp.loggedIn || resp.loginSuccessful) {
                 this.reLoginPostLogin();
             }
         }
