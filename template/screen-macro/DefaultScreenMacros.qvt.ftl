@@ -69,6 +69,15 @@ along with this software (see the LICENSE.md file). If not, see
 </#macro>
 <#macro "section-include">
     <#if sri.doBoundaryComments()><!-- BEGIN section-include[@name=${.node["@name"]}] --></#if>
+    <#assign sectionNode = sri.getSectionIncludedNode(.node)>
+    <#if sectionNode["@paginate"]! == "true">
+        <#assign listName = sectionNode["@list"]>
+        <#assign listObj = context.get(listName)>
+        <#assign pagParms = Static["org.moqui.util.CollectionUtilities"].paginateParameters(listObj?size, listName, context)>
+        <m-form-paginate :paginate="{ count:${context[listName + "Count"]?c}, pageIndex:${context[listName + "PageIndex"]?c},<#rt>
+            <#t> pageSize:${context[listName + "PageSize"]?c}, pageMaxIndex:${context[listName + "PageMaxIndex"]?c},
+            <#lt> pageRangeLow:${context[listName + "PageRangeLow"]?c}, pageRangeHigh:${context[listName + "PageRangeHigh"]?c} }"></m-form-paginate>
+    </#if>
 ${sri.renderSectionInclude(.node)}
     <#if sri.doBoundaryComments()><!-- END   section-include[@name=${.node["@name"]}] --></#if>
 </#macro>
@@ -1126,11 +1135,11 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign listName = formNode["@list"]>
     <#assign isServerStatic = formInstance.isServerStatic(sri.getRenderMode())>
     <#assign formDisabled = formListUrlInfo.disableLink>
+    <#assign hiddenParameterMap = sri.getFormHiddenParameters(formNode)>
+    <#assign hiddenParameterKeys = hiddenParameterMap.keySet()>
 
 <#if isServerStatic><#-- client rendered, static -->
     <#-- TODO: form-list server-static needs to be revisited still for Quasar -->
-    <#assign hiddenParameterMap = sri.getFormHiddenParameters(formNode)>
-    <#assign hiddenParameterKeys = hiddenParameterMap.keySet()>
     <m-form-list name="${formName}" id="${formId}" rows="${formName}" action="${formListUrlInfo.path}" :multi="${isMulti?c}"<#rt>
             <#t> :skip-form="${skipForm?c}" :skip-header="${skipHeader?c}" :header-form="${needHeaderForm?c}"
             <#t> :header-dialog="${isHeaderDialog?c}" :saved-finds="${(formNode["@saved-finds"]! == "true")?c}"
