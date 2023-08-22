@@ -25,8 +25,8 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="callback" read-only="true" require-session-token="false">
         <actions>
-            <set field="moquiAuthFlowReturnTo" from="ec.web?.sessionAttributes?.moquiAuthFlowReturnTo"/>
             <service-call name="daolos.foundation.security.AuthServices.handle#Callback" in-map="context"/>
+            <set field="moquiAuthFlowReturnTo" from="ec.web.sessionAttributes.moquiAuthFlowReturnTo"/>
         </actions>
         <conditional-response url="${moquiAuthFlowReturnTo}" url-type="plain">
             <condition>
