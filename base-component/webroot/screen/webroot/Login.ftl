@@ -20,7 +20,7 @@
 <div class="text-center form-signin">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation"><a href="#login" aria-controls="login" role="tab" data-toggle="tab">${ec.l10n.localize("Login")}</a></li>
-        <#if !authFlowList.isEmpty()><li role="presentation"><a href="#sso" aria-controls="sso" role="tab" data-toggle="tab">${ec.l10n.localize("SSO")}</a></li></#if>
+        <#if authFlowList?has_content && !authFlowList.isEmpty()><li role="presentation"><a href="#sso" aria-controls="sso" role="tab" data-toggle="tab">${ec.l10n.localize("SSO")}</a></li></#if>
         <li role="presentation"><a href="#reset" aria-controls="reset" role="tab" data-toggle="tab">${ec.l10n.localize("Reset Password")}</a></li>
         <li role="presentation"><a href="#change" aria-controls="change" role="tab" data-toggle="tab">${ec.l10n.localize("Change Password")}</a></li>
     </ul>
@@ -58,7 +58,7 @@
             <#if passwordChangeRequired><p class="text-warning text-center">WARNING: Password change required</p></#if>
         </form>
     </div>
-    <#if !authFlowList.isEmpty()>
+    <#if authFlowList?has_content && !authFlowList.isEmpty()>
         <div id="sso" class="tab-pane">
             <#list authFlowList as authFlow>
                 <form method="post" action="/sso/login" class="form-signin">
